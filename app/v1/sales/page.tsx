@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 export default function Sales() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const usage = searchParams.get('usage');
   
   // Determine initial tab based on usage parameter
@@ -54,19 +55,35 @@ export default function Sales() {
   const studyingPlans = [
     {
       id: 'student',
-      name: 'STUDENT PLAN',
-      price: '$9.95',
-      priceUnit: '/month',
-      subtitle: 'Verified student discount',
+      name: 'STUDENT PLAN - MONTHLY',
+      price: '$1.99',
+      priceUnit: '',
+      subtitle: '7-day trial, then $49.99/month',
+      popular: false,
+    },
+    {
+      id: 'student-yearly',
+      name: 'STUDENT PLAN - YEARLY',
+      price: '$1.99',
+      priceUnit: '',
+      subtitle: '7-day trial, then $24.95/year',
       popular: false,
     },
     {
       id: 'teacher',
-      name: 'TEACHER PLAN',
-      price: '$14.95',
-      priceUnit: '/month',
-      subtitle: 'For educators and instructors',
+      name: 'TEACHER PLAN - MONTHLY',
+      price: '$1.99',
+      priceUnit: '',
+      subtitle: '7-day trial, then $49.99/month',
       popular: true,
+    },
+    {
+      id: 'teacher-yearly',
+      name: 'TEACHER PLAN - YEARLY',
+      price: '$1.99',
+      priceUnit: '',
+      subtitle: '7-day trial, then $24.95/year',
+      popular: false,
     },
   ];
 
@@ -496,7 +513,7 @@ export default function Sales() {
                         <span className="text-gray-700">Use PDF Guru on mobile device</span>
                       </div>
                       {/* Additional Student Plan Features */}
-                      {selectedPlan === 'student' && (
+                      {(selectedPlan === 'student' || selectedPlan === 'student-yearly') && (
                         <>
                           <div className="flex items-start gap-3">
                             <svg className="w-5 h-5 text-[#6366F1] mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -513,7 +530,7 @@ export default function Sales() {
                         </>
                       )}
                       {/* Additional Teacher Plan Features */}
-                      {selectedPlan === 'teacher' && (
+                      {(selectedPlan === 'teacher' || selectedPlan === 'teacher-yearly') && (
                         <>
                           <div className="flex items-start gap-3">
                             <svg className="w-5 h-5 text-[#6366F1] mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -534,12 +551,26 @@ export default function Sales() {
                 </div>
 
                 <div className="text-sm text-gray-600 mb-6 leading-relaxed">
-                  By continuing, you agree that your subscription will be auto-renewed at the price of $49.99 each month at the end of the 7-day intro period unless you cancel your subscription. You can cancel it in your account. Learn more in the Subscription Policy. <span className="font-semibold">30-day money-back guarantee.</span> You can find details in our Money-back policy. Our goal is customer satisfaction
+                  {['limited', 'full', 'student', 'student-yearly', 'teacher', 'teacher-yearly'].includes(selectedPlan) && (
+                    <>
+                      By continuing, you agree that your subscription will be auto-renewed at the price of{' '}
+                      {selectedPlan === 'student-yearly' || selectedPlan === 'teacher-yearly' ? '$24.95 each year' : '$49.99 each month'}{' '}
+                      at the end of the 7-day intro period unless you cancel your subscription. You can cancel it in your account. Learn more in the Subscription Policy. <span className="font-semibold">30-day money-back guarantee.</span> You can find details in our Money-back policy. Our goal is customer satisfaction
+                    </>
+                  )}
+                  {selectedPlan === 'annual' && (
+                    <>
+                      By continuing, you agree to the annual subscription at $24.95 per month. You can cancel it in your account. Learn more in the Subscription Policy. <span className="font-semibold">30-day money-back guarantee.</span> You can find details in our Money-back policy. Our goal is customer satisfaction
+                    </>
+                  )}
                 </div>
               </>
             )}
 
-            <button className="w-full bg-[#6366F1] hover:bg-[#5558E3] text-white font-semibold py-4 rounded-lg transition-colors text-lg flex items-center justify-center gap-2">
+            <button 
+              onClick={() => router.push(`/v1/payment?plan=${selectedPlan}`)}
+              className="w-full bg-[#6366F1] hover:bg-[#5558E3] text-white font-semibold py-4 rounded-lg transition-colors text-lg flex items-center justify-center gap-2"
+            >
               Continue
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
