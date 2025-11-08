@@ -119,13 +119,33 @@ export default function V2Payment() {
             {/* Left Column - Payment Form */}
             <div className="lg:col-span-2">
               <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                {/* Subscription Agreement Checkbox - MOVED TO TOP */}
+                <div className="mb-6 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-400 rounded-lg p-5 shadow-md">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={agreeToTerms}
+                      onChange={(e) => setAgreeToTerms(e.target.checked)}
+                      className="w-6 h-6 text-orange-600 border-gray-400 rounded focus:ring-orange-600 mt-0.5 flex-shrink-0 cursor-pointer"
+                    />
+                    <span className="text-sm font-semibold text-gray-900">
+                      Your PDF Guru subscription will auto-renew {isMonthly ? 'each month' : 'annually'} at {afterTrialPrice} + taxes unless canceled via the Billing tab prior to renewal.*
+                    </span>
+                  </label>
+                </div>
+
                 {/* PayPal Button */}
                 <button
                   type="button"
-                  className="w-full bg-[#FFC439] hover:bg-[#FFB700] text-gray-900 font-semibold py-4 rounded-lg transition-colors mb-4 flex items-center justify-center gap-2"
+                  disabled={!agreeToTerms}
+                  className={`w-full font-semibold py-4 rounded-lg transition-colors mb-4 flex items-center justify-center gap-2 ${
+                    agreeToTerms
+                      ? "bg-[#FFC439] hover:bg-[#FFB700] text-gray-900 cursor-pointer"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
                 >
-                  <span className="text-[#003087] font-bold text-xl">Pay</span>
-                  <span className="text-[#009CDE] font-bold text-xl">Pal</span>
+                  <span className={agreeToTerms ? "text-[#003087]" : "text-gray-500"}>Pay</span>
+                  <span className={agreeToTerms ? "text-[#009CDE]" : "text-gray-500"}>Pal</span>
                   <span className="ml-2">Buy Now</span>
                 </button>
 
@@ -134,7 +154,12 @@ export default function V2Payment() {
                 {/* Google Pay Button */}
                 <button
                   type="button"
-                  className="w-full bg-black hover:bg-gray-900 text-white font-semibold py-4 rounded-lg transition-colors mb-6 flex items-center justify-center gap-2"
+                  disabled={!agreeToTerms}
+                  className={`w-full font-semibold py-4 rounded-lg transition-colors mb-6 flex items-center justify-center gap-2 ${
+                    agreeToTerms
+                      ? "bg-black hover:bg-gray-900 text-white cursor-pointer"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
                 >
                   Buy with <span className="font-bold">G</span> Pay
                 </button>
@@ -219,32 +244,17 @@ export default function V2Payment() {
                   <span>Your payment is secured and the information is encrypted</span>
                 </div>
 
-                {/* Subscription Agreement Checkbox */}
-                <div className="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={agreeToTerms}
-                      onChange={(e) => setAgreeToTerms(e.target.checked)}
-                      className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-600 mt-0.5 flex-shrink-0"
-                    />
-                    <span className="text-sm text-gray-900">
-                      Your PDF Guru subscription will auto-renew {isMonthly ? 'each month' : 'annually'} at {afterTrialPrice} + taxes unless canceled via the Billing tab prior to renewal.*
-                    </span>
-                  </label>
-                </div>
-
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={!agreeToTerms}
+                  disabled={!agreeToTerms || !cardNumber || !expiryDate || !cvv}
                   className={`w-full font-bold py-4 rounded-lg transition-colors text-lg shadow-md ${
-                    agreeToTerms
+                    (agreeToTerms && cardNumber && expiryDate && cvv)
                       ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
                       : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }`}
                 >
-                  Download my document
+                  Pay and download my documents
                 </button>
 
                 {/* Terms explanation */}

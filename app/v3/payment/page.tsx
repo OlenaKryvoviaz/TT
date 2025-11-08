@@ -13,6 +13,7 @@ export default function Payment() {
   const [previewExpanded, setPreviewExpanded] = useState(true);
   const [benefitsExpanded, setBenefitsExpanded] = useState(false);
   const [subscriptionChoice, setSubscriptionChoice] = useState<'monthly' | 'yearly' | 'remind' | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'paypal' | 'googlepay' | 'card' | null>(null);
 
   // Plan details
   const planDetails: Record<string, { name: string; price: string; description: string; afterTrialPrice?: string; billingPeriod?: string; type?: string }> = {
@@ -57,7 +58,22 @@ export default function Payment() {
 
   const handleDownload = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Payment processed! Your document is ready to download.');
+    
+    if (!selectedPaymentMethod) {
+      alert('Please select a payment method to continue.');
+      return;
+    }
+    
+    if (selectedPaymentMethod === 'card') {
+      if (!cardNumber || !expiryDate || !cvv) {
+        alert('Please fill in all card details.');
+        return;
+      }
+    }
+    
+    const methodName = selectedPaymentMethod === 'paypal' ? 'PayPal' : 
+                       selectedPaymentMethod === 'googlepay' ? 'Google Pay' : 'Credit Card';
+    alert(`Payment processed with ${methodName}! Your document is ready to download.`);
   };
 
   return (
@@ -163,109 +179,169 @@ export default function Payment() {
             </div>
 
             {/* Payment Form */}
-            <form onSubmit={handleDownload} className="bg-white border border-gray-200 rounded-lg p-8">
-              {/* PayPal Button */}
-              <button
-                type="button"
-                className="w-full bg-[#FFC439] hover:bg-[#FFB700] text-gray-900 font-semibold py-4 rounded-lg transition-colors mb-4 flex items-center justify-center gap-2"
-              >
-                <span className="text-[#003087] font-bold text-xl">Pay</span>
-                <span className="text-[#009CDE] font-bold text-xl">Pal</span>
-                <span className="ml-2">Buy Now</span>
-              </button>
+            <div className="bg-white border border-gray-200 rounded-lg p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Choose your payment method</h3>
+              <p className="text-sm text-gray-600 mb-6">Select one of the payment options below to continue</p>
 
-              <div className="text-center text-sm text-gray-600 mb-4">or pay with a card</div>
-
-              {/* Google Pay Button */}
-              <button
-                type="button"
-                className="w-full bg-black hover:bg-gray-900 text-white font-semibold py-4 rounded-lg transition-colors mb-6 flex items-center justify-center gap-2"
-              >
-                Buy with <span className="font-bold">G</span> Pay
-              </button>
-
-              {/* Card Logos */}
-              <div className="flex items-center justify-center gap-4 mb-6">
-                <div className="text-[#1A1F71] font-bold text-2xl">VISA</div>
-                <div className="flex gap-[-8px]">
-                  <div className="w-8 h-8 rounded-full bg-[#EB001B]"></div>
-                  <div className="w-8 h-8 rounded-full bg-[#F79E1B] -ml-2"></div>
-                </div>
-                <div className="flex gap-[-8px]">
-                  <div className="w-8 h-8 rounded-full bg-[#0099DF]"></div>
-                  <div className="w-8 h-8 rounded-full bg-[#F4A200] -ml-2"></div>
-                </div>
-                <div className="bg-[#006FCF] text-white px-2 py-1 text-xs font-bold">
-                  AMERICAN<br/>EXPRESS
-                </div>
-              </div>
-
-              {/* Card Number */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Credit or Debit Card Number
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                    placeholder="XXXX XXXX XXXX XXXX"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none"
-                    required
-                  />
-                  <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-7 text-gray-400" viewBox="0 0 40 28" fill="currentColor">
-                    <rect width="40" height="28" rx="4" fill="#E5E7EB"/>
-                  </svg>
-                </div>
-              </div>
-
-              {/* Expiry and CVV */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Expiry Date
-                  </label>
-                  <input
-                    type="text"
-                    value={expiryDate}
-                    onChange={(e) => setExpiryDate(e.target.value)}
-                    placeholder="MM/YY"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    CVV/CVC
-                  </label>
-                  <div className="relative">
+              {/* Payment Method Options */}
+              <div className="space-y-4 mb-6">
+                {/* PayPal Option */}
+                <label 
+                  className={`block border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedPaymentMethod === 'paypal'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
                     <input
-                      type="text"
-                      value={cvv}
-                      onChange={(e) => setCvv(e.target.value)}
-                      placeholder="CVV"
-                      maxLength={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none"
-                      required
+                      type="radio"
+                      name="paymentMethod"
+                      value="paypal"
+                      checked={selectedPaymentMethod === 'paypal'}
+                      onChange={() => setSelectedPaymentMethod('paypal')}
+                      className="w-5 h-5 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
-                    <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
-                    </button>
+                    <div className="flex-1 flex items-center justify-between">
+                      <span className="text-gray-900 font-medium">PayPal</span>
+                      <div className="bg-[#FFC439] px-4 py-2 rounded flex items-center gap-1">
+                        <span className="text-[#003087] font-bold text-lg">Pay</span>
+                        <span className="text-[#009CDE] font-bold text-lg">Pal</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </label>
+
+                {/* Google Pay Option */}
+                <label 
+                  className={`block border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedPaymentMethod === 'googlepay'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="googlepay"
+                      checked={selectedPaymentMethod === 'googlepay'}
+                      onChange={() => setSelectedPaymentMethod('googlepay')}
+                      className="w-5 h-5 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <div className="flex-1 flex items-center justify-between">
+                      <span className="text-gray-900 font-medium">Google Pay</span>
+                      <div className="bg-black text-white px-4 py-2 rounded flex items-center gap-1">
+                        <span className="font-bold">G</span>
+                        <span>Pay</span>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+
+                {/* Credit/Debit Card Option */}
+                <label 
+                  className={`block border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedPaymentMethod === 'card'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      checked={selectedPaymentMethod === 'card'}
+                      onChange={() => setSelectedPaymentMethod('card')}
+                      className="w-5 h-5 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <div className="flex-1 flex items-center justify-between">
+                      <span className="text-gray-900 font-medium">Credit or Debit Card</span>
+                      <div className="flex items-center gap-3">
+                        <div className="text-[#1A1F71] font-bold text-lg">VISA</div>
+                        <div className="flex gap-[-8px]">
+                          <div className="w-6 h-6 rounded-full bg-[#EB001B]"></div>
+                          <div className="w-6 h-6 rounded-full bg-[#F79E1B] -ml-2"></div>
+                        </div>
+                        <div className="flex gap-[-8px]">
+                          <div className="w-6 h-6 rounded-full bg-[#0099DF]"></div>
+                          <div className="w-6 h-6 rounded-full bg-[#F4A200] -ml-2"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Details - Only show when card is selected */}
+                  {selectedPaymentMethod === 'card' && (
+                    <div className="ml-9 mt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+                      {/* Card Number */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 mb-2">
+                          Card Number
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={cardNumber}
+                            onChange={(e) => setCardNumber(e.target.value)}
+                            placeholder="XXXX XXXX XXXX XXXX"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                          />
+                          <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-7 text-gray-400" viewBox="0 0 40 28" fill="currentColor">
+                            <rect width="40" height="28" rx="4" fill="#E5E7EB"/>
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Expiry and CVV */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-2">
+                            Expiry Date
+                          </label>
+                          <input
+                            type="text"
+                            value={expiryDate}
+                            onChange={(e) => setExpiryDate(e.target.value)}
+                            placeholder="MM/YY"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-2">
+                            CVV/CVC
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={cvv}
+                              onChange={(e) => setCvv(e.target.value)}
+                              placeholder="CVV"
+                              maxLength={4}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                            />
+                            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </label>
               </div>
 
               {/* Security Notice */}
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
+              <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
                 <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>
                 <span>Your payment is secured and the information is encrypted</span>
               </div>
-            </form>
+            </div>
           </div>
 
           {/* Right Column - Order Summary */}
@@ -505,7 +581,8 @@ export default function Payment() {
 
                 {/* Download Button */}
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleDownload}
                   disabled={!isSingleUse && hasTrial && subscriptionChoice === null}
                   className={`w-full font-bold py-4 rounded-lg transition-colors text-lg mb-3 ${
                     !isSingleUse && hasTrial && subscriptionChoice === null
@@ -513,7 +590,7 @@ export default function Payment() {
                       : 'bg-green-600 hover:bg-green-700 text-white'
                   }`}
                 >
-                  Download my document
+                  Pay and download my document
                 </button>
                 
                 {!isSingleUse && hasTrial && subscriptionChoice === null && (
