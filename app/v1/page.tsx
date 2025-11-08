@@ -27,7 +27,7 @@ export default function V1() {
   const handleFinalDownload = () => {
     if (!frequency) return;
     console.log('Download with:', { email, usage, frequency });
-    router.push('/v1/sales');
+    router.push(`/v1/sales?usage=${encodeURIComponent(usage)}`);
   };
 
   return (
