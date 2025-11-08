@@ -7,15 +7,16 @@ export default function Payment() {
   const searchParams = useSearchParams();
   const planId = searchParams.get('plan') || 'full';
   
-  const [upsellAdded, setUpsellAdded] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
-  const [previewExpanded, setPreviewExpanded] = useState(false);
+  const [previewExpanded, setPreviewExpanded] = useState(true);
   const [benefitsExpanded, setBenefitsExpanded] = useState(false);
+  const [subscriptionChoice, setSubscriptionChoice] = useState<'monthly' | 'yearly' | 'remind' | null>(null);
 
   // Plan details
-  const planDetails: Record<string, { name: string; price: string; description: string; afterTrialPrice?: string; billingPeriod?: string }> = {
+  const planDetails: Record<string, { name: string; price: string; description: string; afterTrialPrice?: string; billingPeriod?: string; type?: string }> = {
+    'single-use': { name: 'SINGLE USE PLAN', price: '$0.59', description: 'One-time payment', type: 'one-time' },
     limited: { name: '7-DAY LIMITED ACCESS', price: '$0.99', description: '7-day trial', afterTrialPrice: '$49.99', billingPeriod: 'monthly' },
     full: { name: '7-DAY FULL ACCESS', price: '$1.99', description: '7-day trial', afterTrialPrice: '$49.99', billingPeriod: 'monthly' },
     annual: { name: 'ANNUAL PLAN', price: '$24.95', description: 'Billed monthly' },
@@ -25,72 +26,34 @@ export default function Payment() {
     'teacher-yearly': { name: 'TEACHER PLAN - YEARLY', price: '$1.99', description: '7-day trial', afterTrialPrice: '$24.95', billingPeriod: 'yearly' },
   };
 
-  // Upsell options based on plan
-  const upsellOptions: Record<string, { name: string; description: string; trialPrice: string; afterTrialPrice: string }> = {
-    limited: { 
-      name: 'AI Assistant', 
-      description: 'Chat with your documents for quick answers and one-click summaries. Works with Acrobat Pro, Acrobat Standard, Acrobat Reader, or any free or paid Acrobat plans.',
-      trialPrice: '$8.39',
-      afterTrialPrice: '$8.39'
-    },
-    full: { 
-      name: 'AI Assistant', 
-      description: 'Chat with your documents for quick answers and one-click summaries. Works with Acrobat Pro, Acrobat Standard, Acrobat Reader, or any free or paid Acrobat plans.',
-      trialPrice: '$8.39',
-      afterTrialPrice: '$8.39'
-    },
-    annual: { 
-      name: 'AI Assistant', 
-      description: 'Chat with your documents for quick answers and one-click summaries. Works with Acrobat Pro, Acrobat Standard, Acrobat Reader, or any free or paid Acrobat plans.',
-      trialPrice: '$8.39',
-      afterTrialPrice: '$8.39'
-    },
-    student: { 
-      name: 'AI Summarizer', 
-      description: 'Explains complex text in simple words or short summaries. Perfect for studying and understanding difficult academic materials.',
-      trialPrice: '$0.00',
-      afterTrialPrice: '$4.99'
-    },
-    'student-yearly': { 
-      name: 'AI Summarizer', 
-      description: 'Explains complex text in simple words or short summaries. Perfect for studying and understanding difficult academic materials.',
-      trialPrice: '$0.00',
-      afterTrialPrice: '$4.99'
-    },
-    teacher: { 
-      name: 'AI Agent', 
-      description: 'Auto-check answers, suggest grades, and generate feedback comments. Save hours on grading and provide better feedback to students.',
-      trialPrice: '$0.00',
-      afterTrialPrice: '$12.99'
-    },
-    'teacher-yearly': { 
-      name: 'AI Agent', 
-      description: 'Auto-check answers, suggest grades, and generate feedback comments. Save hours on grading and provide better feedback to students.',
-      trialPrice: '$0.00',
-      afterTrialPrice: '$12.99'
-    },
-  };
-
   const currentPlan = planDetails[planId] || planDetails.full;
-  const currentUpsell = upsellOptions[planId] || upsellOptions.full;
 
   const basePriceNum = parseFloat(currentPlan.price.replace('$', ''));
-  const upsellTrialPriceNum = parseFloat(currentUpsell.trialPrice.replace('$', ''));
-  const upsellAfterTrialPriceNum = parseFloat(currentUpsell.afterTrialPrice.replace('$', ''));
-  
-  const totalPriceNow = upsellAdded ? (basePriceNum + upsellTrialPriceNum).toFixed(2) : basePriceNum.toFixed(2);
+  const totalPriceNow = basePriceNum.toFixed(2);
   
   // Calculate price after trial ends
   const afterTrialBasePrice = currentPlan.afterTrialPrice ? parseFloat(currentPlan.afterTrialPrice.replace('$', '')) : 0;
-  const totalPriceAfterTrial = upsellAdded ? (afterTrialBasePrice + upsellAfterTrialPriceNum).toFixed(2) : afterTrialBasePrice.toFixed(2);
+  const totalPriceAfterTrial = afterTrialBasePrice.toFixed(2);
   
   // Calculate trial end date (7 days from now)
   const trialEndDate = new Date();
   trialEndDate.setDate(trialEndDate.getDate() + 7);
   const formattedTrialEndDate = trialEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   
+  // Calculate decision date (6 days from now - 1 day before trial ends)
+  const decisionDate = new Date();
+  decisionDate.setDate(decisionDate.getDate() + 6);
+  const formattedDecisionDate = decisionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  
   // Check if plan has trial
   const hasTrial = currentPlan.afterTrialPrice !== undefined;
+  
+  // Check if plan is single-use
+  const isSingleUse = currentPlan.type === 'one-time';
+
+  // Pricing for subscription options
+  const monthlyPrice = '$49.99';
+  const yearlyPrice = '$24.95';
 
   const handleDownload = (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,85 +148,18 @@ export default function Payment() {
               
               {previewExpanded && (
                 <div className="px-6 pb-6">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="aspect-[8.5/11] max-h-[300px] bg-gradient-to-br from-gray-100 to-gray-200 rounded flex items-center justify-center text-gray-400">
-                      <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="aspect-[8.5/11] max-h-[180px] bg-gradient-to-br from-gray-100 to-gray-200 rounded flex items-center justify-center text-gray-400">
+                      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
-                    <div className="text-center mt-3 text-sm text-gray-700 font-medium">
+                    <div className="text-center mt-2 text-xs text-gray-700 font-medium">
                       4506_t_form....pdf
                     </div>
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Upsell Section - Similar to Adobe */}
-            <div className="bg-white border-2 border-gray-200 rounded-lg p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                Power up your plan with {currentUpsell.name}.
-              </h2>
-              
-              <div className="border-2 border-gray-200 rounded-lg p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-4 flex-1">
-                    <svg className="w-12 h-12 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-                      <path d="M14 2v6h6"/>
-                    </svg>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-bold text-gray-900">{currentUpsell.name}</h3>
-                        {upsellTrialPriceNum === 0 && (
-                          <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
-                            Free during trial
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 mb-4">
-                        {currentUpsell.description}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right ml-4">
-                    <div className="text-2xl font-bold text-gray-900">
-                      {upsellTrialPriceNum === 0 ? (
-                        <>
-                          {currentUpsell.afterTrialPrice}
-                          <span className="text-base font-normal text-gray-600"> US$/mo</span>
-                        </>
-                      ) : (
-                        <>
-                          {currentUpsell.trialPrice}
-                          <span className="text-base font-normal text-gray-600"> US$/mo</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-500">incl. VAT</div>
-                  </div>
-                </div>
-                
-                <button
-                  onClick={() => setUpsellAdded(!upsellAdded)}
-                  className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                    upsellAdded
-                      ? 'bg-gray-100 text-gray-700 border-2 border-gray-300 hover:bg-gray-200'
-                      : 'bg-white text-gray-900 border-2 border-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  {upsellAdded ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Added
-                    </span>
-                  ) : (
-                    'Select'
-                  )}
-                </button>
-              </div>
             </div>
 
             {/* Payment Form */}
@@ -406,57 +302,50 @@ export default function Payment() {
                         </svg>
                         <div>
                           <div className="font-semibold text-gray-900">{currentPlan.name}</div>
-                          <div className="text-xs text-gray-500">Subscription</div>
+                          <div className="text-xs text-gray-500">{isSingleUse ? 'One-time purchase' : 'Subscription'}</div>
                         </div>
                       </div>
-                      <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
-                        7-day free trial
-                      </span>
+                      {!isSingleUse && (
+                        <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+                          7-day free trial
+                        </span>
+                      )}
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">
-                      {currentPlan.billingPeriod === 'monthly' ? 'Monthly' : 'Yearly'}
-                    </div>
+                    {!isSingleUse && (
+                      <div className="text-sm text-gray-600 mb-2">
+                        {currentPlan.billingPeriod === 'monthly' ? 'Monthly' : 'Yearly'}
+                      </div>
+                    )}
                     <div className="text-lg font-bold text-gray-900">
-                      {currentPlan.price}<span className="text-sm font-normal text-gray-600">/{currentPlan.billingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
+                      {currentPlan.price}
+                      {!isSingleUse && <span className="text-sm font-normal text-gray-600">/{currentPlan.billingPeriod === 'yearly' ? 'yr' : 'mo'}</span>}
                       <div className="text-xs text-gray-500 font-normal">incl. VAT</div>
                     </div>
                   </div>
-
-                  {upsellAdded && (
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-                            <path d="M14 2v6h6"/>
-                          </svg>
-                          <div>
-                            <div className="font-semibold text-gray-900">{currentUpsell.name}</div>
-                            <div className="text-xs text-gray-500">Subscription</div>
-                          </div>
-                        </div>
-                        {upsellTrialPriceNum === 0 && (
-                          <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
-                            Free during trial
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600 mb-2">Monthly</div>
-                      <div className="text-lg font-bold text-gray-900">
-                        {upsellTrialPriceNum === 0 ? currentUpsell.afterTrialPrice : currentUpsell.trialPrice}
-                        <span className="text-sm font-normal text-gray-600">/mo</span>
-                        <div className="text-xs text-gray-500 font-normal">incl. VAT</div>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Benefits List - Collapsible */}
                 {benefitsExpanded && (
                   <div className="mb-6 pb-6 border-b border-gray-200">
-                    <h4 className="text-base font-bold text-gray-900 mb-3">1 WEEK UNLIMITED ACCESS</h4>
+                    <h4 className="text-base font-bold text-gray-900 mb-3">
+                      {isSingleUse ? 'SINGLE USE ACCESS' : '1 WEEK UNLIMITED ACCESS'}
+                    </h4>
                     <div className="space-y-2">
-                      {[
+                      {isSingleUse ? [
+                        'One-time payment',
+                        'Single download access',
+                        'No subscription',
+                        'Instant access',
+                        'High-quality conversion',
+                        'Secure processing',
+                      ].map((feature, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-[#6366F1] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-sm text-gray-700">{feature}</span>
+                        </div>
+                      )) : [
                         'Unlimited Downloads',
                         'Unlimited Edits',
                         'Convert to any formats',
@@ -475,7 +364,7 @@ export default function Payment() {
                 )}
 
                 {/* Subtotal and VAT */}
-                {hasTrial && (
+                {!isSingleUse && hasTrial && (
                   <div className="space-y-2 mb-4 pb-4 border-b border-gray-200">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
@@ -500,7 +389,7 @@ export default function Payment() {
                 )}
 
                 {/* DUE NOW / DUE LATER - Adobe Style */}
-                {hasTrial ? (
+                {!isSingleUse && hasTrial ? (
                   <div className="space-y-4 mb-6">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-blue-500"></div>
@@ -516,16 +405,40 @@ export default function Payment() {
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-gray-300"></div>
                       <div className="flex-1">
-                        <div className="flex justify-between items-center">
-                          <span className="text-base font-medium text-gray-900">Due {formattedTrialEndDate}</span>
-                          <span className="text-lg font-bold text-gray-900">${totalPriceAfterTrial} US$/{currentPlan.billingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
-                        </div>
-                        {upsellAdded && upsellTrialPriceNum === 0 && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            {currentPlan.billingPeriod === 'yearly' ? 'Yearly' : 'Monthly'} subscription
+                        {subscriptionChoice === 'remind' ? (
+                          <div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-base font-medium text-gray-900">Decision by {formattedDecisionDate}</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              We'll remind you to choose your subscription plan
+                            </div>
+                          </div>
+                        ) : subscriptionChoice === 'yearly' ? (
+                          <div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-base font-medium text-gray-900">Due {formattedTrialEndDate}</span>
+                              <span className="text-lg font-bold text-gray-900">{yearlyPrice} US$/yr</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">incl. VAT</div>
+                          </div>
+                        ) : subscriptionChoice === 'monthly' ? (
+                          <div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-base font-medium text-gray-900">Due {formattedTrialEndDate}</span>
+                              <span className="text-lg font-bold text-gray-900">{monthlyPrice} US$/mo</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">incl. VAT</div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-base font-medium text-gray-900">Due {formattedTrialEndDate}</span>
+                              <span className="text-lg font-bold text-gray-400">TBD</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">Select an option below</div>
                           </div>
                         )}
-                        <div className="text-xs text-gray-500 mt-1">incl. VAT</div>
                       </div>
                     </div>
                   </div>
@@ -536,30 +449,85 @@ export default function Payment() {
                   </div>
                 )}
 
-                {/* Terms Warning */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-                  <p className="text-xs text-gray-700 leading-relaxed">
-                    {hasTrial ? (
-                      <>
-                        By continuing, you agree that if you do not cancel at least 24 hours before the end of the 7-day trial for {currentPlan.price}, you will be charged ${totalPriceAfterTrial} {currentPlan.billingPeriod === 'yearly' ? 'per year' : 'per month'} until you cancel your subscription. You can cancel it in your account. Learn more in the{' '}
-                        <a href="#" className="text-blue-600 hover:underline">Subscription Policy</a>. <span className="font-semibold">30-day money-back guarantee.</span>
-                      </>
-                    ) : (
-                      <>
-                        By continuing, you agree to the subscription terms. Learn more in the{' '}
-                        <a href="#" className="text-blue-600 hover:underline">Subscription Policy</a>.
-                      </>
-                    )}
-                  </p>
-                </div>
+                {/* Subscription Choice Options - Only for trial plans */}
+                {!isSingleUse && hasTrial && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">After trial ends:</h4>
+                    
+                    <div className="space-y-2">
+                      {/* Option 1: Monthly */}
+                      <label className="flex items-start gap-3 cursor-pointer p-2 rounded hover:bg-gray-100 transition-colors">
+                        <input
+                          type="radio"
+                          name="subscription-choice"
+                          value="monthly"
+                          checked={subscriptionChoice === 'monthly'}
+                          onChange={() => setSubscriptionChoice('monthly')}
+                          className="mt-0.5 w-4 h-4 text-[#6366F1] focus:ring-[#6366F1]"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Continue with monthly subscription - <span className="font-semibold">{monthlyPrice}/mo</span>
+                        </span>
+                      </label>
+
+                      {/* Option 2: Yearly */}
+                      <label className="flex items-start gap-3 cursor-pointer p-2 rounded hover:bg-gray-100 transition-colors">
+                        <input
+                          type="radio"
+                          name="subscription-choice"
+                          value="yearly"
+                          checked={subscriptionChoice === 'yearly'}
+                          onChange={() => setSubscriptionChoice('yearly')}
+                          className="mt-0.5 w-4 h-4 text-[#6366F1] focus:ring-[#6366F1]"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Continue with yearly subscription - <span className="font-semibold">{yearlyPrice}/yr</span>
+                        </span>
+                      </label>
+
+                      {/* Option 3: Remind */}
+                      <label className="flex items-start gap-3 cursor-pointer p-2 rounded hover:bg-gray-100 transition-colors">
+                        <input
+                          type="radio"
+                          name="subscription-choice"
+                          value="remind"
+                          checked={subscriptionChoice === 'remind'}
+                          onChange={() => setSubscriptionChoice('remind')}
+                          className="mt-0.5 w-4 h-4 text-[#6366F1] focus:ring-[#6366F1]"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Ask me 1 day before trial ends
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )}
 
                 {/* Download Button */}
                 <button
                   type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-lg transition-colors text-lg"
+                  disabled={!isSingleUse && hasTrial && subscriptionChoice === null}
+                  className={`w-full font-bold py-4 rounded-lg transition-colors text-lg mb-3 ${
+                    !isSingleUse && hasTrial && subscriptionChoice === null
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
                 >
                   Download my document
                 </button>
+                
+                {!isSingleUse && hasTrial && subscriptionChoice === null && (
+                  <p className="text-xs text-red-600 text-center mb-3">
+                    Please select what to do after trial ends
+                  </p>
+                )}
+
+                {/* Policy Link */}
+                <div className="text-center">
+                  <a href="#" className="text-sm text-blue-600 hover:underline">
+                    Subscription and Cancelation Policy
+                  </a>
+                </div>
               </div>
             </div>
           </div>
