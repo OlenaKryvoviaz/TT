@@ -567,39 +567,41 @@ export default function Sales() {
               </>
             )}
 
-            <button 
-              onClick={() => router.push(`/v1/payment?plan=${selectedPlan}`)}
-              className="w-full bg-[#6366F1] hover:bg-[#5558E3] text-white font-semibold py-4 rounded-lg transition-colors text-lg flex items-center justify-center gap-2"
-            >
-              Continue
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
           </div>
 
           {/* Right Column - Document Preview */}
           <div className="lg:col-span-1">
             <div className="sticky top-8">
-              <div className="bg-[#E7F5ED] rounded-lg p-6 mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <div className="bg-[#E7F5ED] rounded-lg p-3 mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="font-semibold text-green-800">Your document is ready!</span>
+                  <span className="font-semibold text-green-800 text-sm">Your document is ready!</span>
                 </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="aspect-[8.5/11] bg-gradient-to-br from-gray-100 to-gray-200 rounded flex items-center justify-center text-gray-400">
-                    <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-white rounded-lg p-2 shadow-sm">
+                  <div className="aspect-[8.5/7] bg-gradient-to-br from-gray-100 to-gray-200 rounded flex items-center justify-center text-gray-400">
+                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
                 </div>
               </div>
 
+              {/* Continue Button */}
+              <button 
+                onClick={() => router.push(`/v1/payment?plan=${selectedPlan}`)}
+                className="w-full bg-[#6366F1] hover:bg-[#5558E3] text-white font-semibold py-3 rounded-lg transition-colors text-base flex items-center justify-center gap-2 mb-3"
+              >
+                Continue
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
               {/* Rating */}
               <div className="text-center">
-                <div className="text-lg font-semibold text-gray-900 mb-2">
+                <div className="text-sm font-semibold text-gray-900 mb-1">
                   4.5 out of 5 | based on 12,564 reviews
                 </div>
                 <div className="flex justify-center gap-1">
