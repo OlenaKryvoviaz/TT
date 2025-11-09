@@ -22,9 +22,9 @@ export default function CombinedSales() {
   const [showContactForm, setShowContactForm] = useState(false);
   const [formType, setFormType] = useState<'school' | 'corporate' | null>(null);
 
-  // Check if single use plan should be shown (dynamically based on current tab and frequency)
-  // Case-insensitive check for "time to time"
-  const showSingleUsePlan = frequency?.toLowerCase() === 'time to time' && activeTab === 'personal';
+  // Check if single use plan should be shown
+  // Show if: (usage is "Personal" OR frequency is "Time to time") AND activeTab is "personal"
+  const showSingleUsePlan = (usage?.toLowerCase() === 'personal' || frequency?.toLowerCase() === 'time to time') && activeTab === 'personal';
 
   const tabs = [
     { id: 'personal' as const, label: 'Personal Plans' },
