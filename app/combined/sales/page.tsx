@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function CombinedSales() {
+function CombinedSalesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const usage = searchParams.get('usage');
@@ -160,9 +160,9 @@ export default function CombinedSales() {
             <tr className="border-b border-gray-200">
               <th className="text-left p-4 font-medium text-gray-500 text-sm">Features</th>
               {plansToShow.map((plan) => {
-                const pricing = plan.isSingleUse 
-                  ? { price: plan.price, subtitle: plan.subtitle, priceUnit: undefined }
-                  : (billingCycle === 'monthly' ? plan.monthly : plan.yearly);
+                const pricing: { price: string; subtitle: string; priceUnit?: string } = plan.isSingleUse 
+                  ? { price: (plan as typeof singleUsePlan).price, subtitle: (plan as typeof singleUsePlan).subtitle, priceUnit: undefined }
+                  : (billingCycle === 'monthly' ? (plan as typeof personalPlans[0]).monthly : (plan as typeof personalPlans[0]).yearly);
                 
                 return (
                   <th key={plan.id} className={`p-4 relative ${plan.popular ? 'bg-amber-50' : ''}`}>
@@ -704,5 +704,13 @@ export default function CombinedSales() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CombinedSales() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+      <CombinedSalesContent />
+    </Suspense>
   );
 }

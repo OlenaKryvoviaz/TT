@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function Sales() {
+function SalesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const usage = searchParams.get('usage');
@@ -776,6 +776,14 @@ export default function Sales() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Sales() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+      <SalesContent />
+    </Suspense>
   );
 }
 

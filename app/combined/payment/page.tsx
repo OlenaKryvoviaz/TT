@@ -1,9 +1,9 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 
-export default function Payment() {
+function PaymentContent() {
   const searchParams = useSearchParams();
   const planId = searchParams.get('plan') || 'full';
   
@@ -744,5 +744,13 @@ export default function Payment() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function Payment() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+      <PaymentContent />
+    </Suspense>
   );
 }

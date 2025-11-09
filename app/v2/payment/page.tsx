@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function V2Payment() {
+function V2PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedPlan = searchParams.get("plan") || "full";
@@ -334,6 +334,14 @@ export default function V2Payment() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function V2Payment() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+      <V2PaymentContent />
+    </Suspense>
   );
 }
 
